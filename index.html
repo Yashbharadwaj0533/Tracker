@@ -112,16 +112,24 @@
         <div id="admin-dashboard" style="display:none;">
             <div class="admin-header">
                 <h3><i class="fas fa-map-marked-alt"></i> Live Status Map</h3>
-                <div class="filter-group">
-                    <input type="date" id="filterDate">
-                    <select id="distanceFilter">
-    <option value="all">All Distance</option>
-    <option value="50">Within 50 KM</option>
-    <option value="100">Within 100 KM</option>
-    <option value="200">Within 200 KM</option>
-</select>
-                    <button onclick="loadMapData()" class="admin-nav-btn" style="padding: 8px 12px;">Filter</button>
-                </div>
+               <div class="filter-group">
+    <input type="date" id="filterDate">
+
+    <!-- 🔥 NEW: Location Search -->
+    <input type="text" id="searchLocation" placeholder="Enter city (e.g. Delhi)">
+    <button onclick="setCustomLocation()" class="admin-nav-btn">Set Location</button>
+
+    <!-- 🔥 UPDATED: Distance Filter -->
+    <select id="distanceFilter">
+        <option value="all">All Distance</option>
+        <option value="50">Within 50 KM</option>
+        <option value="100">Within 100 KM</option>
+        <option value="200">Within 200 KM</option>
+        <option value="500">Within 500 KM</option>
+    </select>
+
+    <button onclick="loadMapData()" class="admin-nav-btn">Filter</button>
+</div>
             </div>
             <div id="map"></div>
         </div>
@@ -138,8 +146,10 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let map, markers = [];
-let adminLat = null;
-let adminLng = null;
+let selectedLat = null;
+let selectedLng = null;
+let locationMarker = null;
+let radiusCircle = null;
 
 // --- NAVIGATION ---
 function showAdminLogin() {
@@ -169,11 +179,31 @@ function requestGPS() {
 }
 
 async function setCity(lat, lng) {
-    try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-        const data = await res.json();
-        document.getElementById('city').value = data.address.city || data.address.town || "Unknown";
-    } catch (e) { document.getElementById('city').value = "Unknown"; }
+   async function setCustomLocation() {
+    const place = document.getElementById('searchLocation').value;
+
+    if (!place) return alert("Enter location");
+
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${place}`);
+    const data = await res.json();
+
+    if (!data.length) return alert("Location not found");
+
+    selectedLat = parseFloat(data[0].lat);
+    selectedLng = parseFloat(data[0].lon);
+
+    map.setView([selectedLat, selectedLng], 8);
+
+    if (locationMarker) map.removeLayer(locationMarker);
+
+    locationMarker = L.marker([selectedLat, selectedLng])
+        .addTo(map)
+        .bindPopup("Selected Location")
+        .openPopup();
+
+    drawCircle();
+    loadMapData();
+}
 }
 
 // --- ADMIN LOGIC (MAP & FILTER) ---
@@ -182,11 +212,21 @@ function checkLogin() {
     if (pass === 'Yash@123') {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('admin-dashboard').style.display = 'block';
-        navigator.geolocation.getCurrentPosition((pos) => {
+       navigator.geolocation.getCurrentPosition((pos) => {
+
     adminLat = pos.coords.latitude;
     adminLng = pos.coords.longitude;
+
+    if (!map) {
+        map = L.map('map').setView([adminLat, adminLng], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    }
+
+    drawCircle();
+    loadMapData();
+
 }, () => {
-    alert("Please allow location for distance filter");
+    alert("Please allow location");
 });
         
         // Default filter date to today
@@ -222,9 +262,12 @@ data.forEach(rec => {
 
         let distance = 0;
 
-        if (adminLat && adminLng) {
-            distance = getDistance(adminLat, adminLng, rec.latitude, rec.longitude);
-        }
+        let baseLat = selectedLat || adminLat;
+let baseLng = selectedLng || adminLng;
+
+if (baseLat && baseLng) {
+    distance = getDistance(baseLat, baseLng, rec.latitude, rec.longitude);
+}
 
         // 🔥 Apply distance filter
         if (selectedDistance !== "all" && distance > parseInt(selectedDistance)) {
@@ -293,6 +336,10 @@ function getDistance(lat1, lon1, lat2, lon2) {
 
     return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+document.getElementById('distanceFilter').addEventListener('change', () => {
+    drawCircle();
+    loadMapData();
+});
 
 </script>
 
