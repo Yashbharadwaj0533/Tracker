@@ -6,6 +6,7 @@
     <title>Innoworq Engineer Tracking & Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="icon" href="Innoworq.png" />
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height:100vh; padding:20px; }
@@ -51,6 +52,20 @@
         .error { background:#fee2e2; color:#b91c1c; border: 1px solid #ef4444; }
 
         @media(max-width:600px){ .form-row{ grid-template-columns:1fr; } header { flex-direction: column; text-align: center; } }
+    
+
+        .custom-marker {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 0 5px rgba(0,0,0,0.4);
+        }
+       .bg-available { background-color: #2ecc71; } /* Green */
+       .bg-travelling { background-color: #3498db; } /* Blue */
+       .bg-assigned { background-color: #f1c40f; }   /* Yellow */
+       .bg-on-hold { background-color: #e74c3c; }    /* Red */
+
     </style>
 </head>
 <body>
@@ -300,32 +315,50 @@ async function loadMapData() {
 
     const selectedDistance = document.getElementById('distanceFilter').value;
 
-    data.forEach(rec => {
-
-        if (!rec.latitude || !rec.longitude) return;
-
-        let baseLat = selectedLat || adminLat;
-        let baseLng = selectedLng || adminLng;
-
+   // FIND THIS LOOP IN YOUR loadMapData() FUNCTION AND REPLACE IT:
+data.forEach(rec => {
+    if (rec.latitude && rec.longitude) {
         let distance = 0;
-
-        if (baseLat && baseLng) {
-            distance = getDistance(baseLat, baseLng, rec.latitude, rec.longitude);
+        if (adminLat && adminLng) {
+            distance = getDistance(adminLat, adminLng, rec.latitude, rec.longitude);
         }
 
-        if (selectedDistance !== "all" && distance > parseInt(selectedDistance)) return;
+        // Apply distance filter
+        if (selectedDistance !== "all" && distance > parseInt(selectedDistance)) {
+            return;
+        }
 
-        const marker = L.marker([rec.latitude, rec.longitude])
-            .addTo(map)
+        // --- NEW COLOR LOGIC ---
+        let statusClass = 'bg-available'; // Default color
+        const currentStatus = (rec.status || "").toLowerCase();
+
+        if (currentStatus.includes('available')) statusClass = 'bg-available';
+        else if (currentStatus.includes('travelling')) statusClass = 'bg-travelling';
+        else if (currentStatus.includes('assigned')) statusClass = 'bg-assigned';
+        else if (currentStatus.includes('on hold')) statusClass = 'bg-on-hold';
+
+        // Create the colored circle icon
+        const coloredIcon = L.divIcon({
+            className: `custom-marker ${statusClass}`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
+        // Add marker to map with the new icon
+        const m = L.marker([rec.latitude, rec.longitude], { icon: coloredIcon }).addTo(map)
             .bindPopup(`
-                <b>${rec.engineer}</b><br>
-                Status: ${rec.status}<br>
-                City: ${rec.city}<br>
-                Distance: ${distance.toFixed(2)} KM
+                <div style="font-size:13px;">
+                    <b style="color:#764ba2;">${rec.engineer}</b><br>
+                    <b>Status:</b> ${rec.status}<br>
+                    <b>City:</b> ${rec.city}<br>
+                    <b>Distance:</b> ${distance.toFixed(2)} KM<br>
+                    <b>Time:</b> ${rec.loginTime}
+                </div>
             `);
 
-        markers.push(marker);
-    });
+        markers.push(m);
+    }
+});
 
     if (markers.length) {
         const group = new L.featureGroup(markers);
