@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innoworq Engineer Tracking & Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height:100vh; padding:20px; }
+        .container { max-width:900px; margin:0 auto; }
+        
+        /* Header with Admin Button */
+        header { 
+            background:white; 
+            padding:20px 30px; 
+            border-radius:12px; 
+            margin-bottom:20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow:0 10px 25px rgba(0,0,0,0.2); 
+        }
+        header h1 { color:#667eea; font-size: 1.5rem; display:flex; align-items:center; gap:10px; }
+        .admin-nav-btn { background: #764ba2; color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.3s; }
+        .admin-nav-btn:hover { background: #667eea; }
+
+        #permissionGate, .form-card, .admin-card { background:white; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        
+        #permissionGate { text-align: center; }
+        .gate-icon { font-size: 50px; color: #ef4444; margin-bottom: 20px; }
+        .gate-btn { background: #667eea; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; width: 100%; }
+        
+        #mainContent, #adminSection { display: none; }
+
+        /* Form Styles */
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px; }
+        .form-group { display:flex; flex-direction:column; margin-bottom: 10px; }
+        .form-group label { font-weight:600; margin-bottom:6px; display:flex; gap:8px; align-items:center; }
+        .form-group input, .form-group select { padding:12px; border:2px solid #e0e0e0; border-radius:8px; font-size:14px; }
+        .submit-btn { width:100%; padding:15px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer; font-weight:600; }
+        
+        /* Admin & Map Styles */
+        #map { height: 450px; width: 100%; border-radius: 8px; margin-top: 15px; border: 1px solid #ddd; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .filter-group { display: flex; gap: 10px; align-items: center; }
+
+        #message { margin-top:15px; padding:15px; border-radius:8px; display:none; text-align:center; font-weight: 600; }
+        .success { background:#d1fae5; color:#065f46; border: 1px solid #059669; }
+        .error { background:#fee2e2; color:#b91c1c; border: 1px solid #ef4444; }
+
+        @media(max-width:600px){ .form-row{ grid-template-columns:1fr; } header { flex-direction: column; text-align: center; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1><i class="fas fa-satellite-dish"></i> Innoworq</h1>
+        <button onclick="showAdminLogin()" class="admin-nav-btn"><i class="fas fa-user-shield"></i> Admin Login</button>
+    </header>
+
+    <div id="permissionGate">
+        <div class="gate-icon"><i class="fas fa-location-arrow"></i></div>
+        <h2>Engineer Portal</h2>
+        <p style="color:#666;">GPS access is required to submit your field status.</p>
+        <button onclick="requestGPS()" class="gate-btn">Enable GPS & Open Form</button>
+        <div id="gateError" style="color:#ef4444; margin-top:15px; font-weight:bold; display:none;">❌ Permission Denied. Please enable location.</div>
+    </div>
+
+    <div id="mainContent">
+        <div class="form-card">
+            <h3 style="margin-bottom:20px; color:#667eea;">Daily Tracking Form</h3>
+            <form id="trackingForm">
+                <div class="form-row">
+                    <div class="form-group"><label><i class="fas fa-user"></i> Name</label><input type="text" name="engineer" required></div>
+                    <div class="form-group"><label><i class="fas fa-id-card"></i> Emp ID</label><input type="text" name="employeeId" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label><i class="fas fa-ticket-alt"></i> Ticket ID</label><input type="text" name="ticketId"></div>
+                    <div class="form-group"><label><i class="fas fa-tasks"></i> Status</label>
+                        <select name="Status" required>
+                            <option value="">Select Status</option>
+                            <option>Assigned</option><option>Available</option><option>Travelling</option><option>On Hold</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Latitude</label><input type="text" id="latitude" name="Latitude" readonly></div>
+                    <div class="form-group"><label>Longitude</label><input type="text" id="longitude" name="Longitude" readonly></div>
+                </div>
+                      <div class="form-group"><label><i class="fas fa-remarks"></i> Remarks</label><input type="text" name="Remarks"></div>
+                <div class="form-row">
+                <input type="hidden" id="city" name="city">
+                <button type="submit" class="submit-btn"><i class="fas fa-save"></i> Submit Record</button></div>
+            </form>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <div id="adminSection" class="admin-card">
+        <div id="login-screen">
+            <div class="admin-header"><h3><i class="fas fa-lock"></i> Admin Login</h3></div>
+            <div class="form-group">
+                <input type="password" id="admin-pass" placeholder="Enter Admin Password">
+                <button onclick="checkLogin()" class="gate-btn">Login</button>
+            </div>
+            <button onclick="backToEngineer()" style="background:none; border:none; color:#666; cursor:pointer; margin-top:10px; font-size:12px;">← Back to Engineer Portal</button>
+        </div>
+
+        <div id="admin-dashboard" style="display:none;">
+            <div class="admin-header">
+                <h3><i class="fas fa-map-marked-alt"></i> Live Status Map</h3>
+                <div class="filter-group">
+                    <input type="date" id="filterDate">
+                    <select id="distanceFilter">
+    <option value="all">All Distance</option>
+    <option value="50">Within 50 KM</option>
+    <option value="100">Within 100 KM</option>
+    <option value="200">Within 200 KM</option>
+</select>
+                    <button onclick="loadMapData()" class="admin-nav-btn" style="padding: 8px 12px;">Filter</button>
+                </div>
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// --- CONFIGURATION ---
+const SUPABASE_URL = 'https://tgmxpawrrsxphsmsqfyz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRnbXhwYXdycnN4cGhzbXNxZnl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzOTM1MjksImV4cCI6MjA5MTk2OTUyOX0.lbNzIShVRTjkPNsFmH1pBGX6KuI2F7eR1qcKPcD6M3E';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let map, markers = [];
+let adminLat = null;
+let adminLng = null;
+
+// --- NAVIGATION ---
+function showAdminLogin() {
+    document.getElementById('permissionGate').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('adminSection').style.display = 'block';
+}
+
+function backToEngineer() {
+    document.getElementById('adminSection').style.display = 'none';
+    document.getElementById('permissionGate').style.display = 'block';
+}
+
+// --- ENGINEER LOGIC (GPS) ---
+function requestGPS() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            document.getElementById('permissionGate').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('latitude').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('longitude').value = pos.coords.longitude.toFixed(6);
+            setCity(pos.coords.latitude, pos.coords.longitude);
+        }, () => { 
+            document.getElementById('gateError').style.display = 'block'; 
+        }, { enableHighAccuracy: true });
+    }
+}
+
+async function setCity(lat, lng) {
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+        const data = await res.json();
+        document.getElementById('city').value = data.address.city || data.address.town || "Unknown";
+    } catch (e) { document.getElementById('city').value = "Unknown"; }
+}
+
+// --- ADMIN LOGIC (MAP & FILTER) ---
+function checkLogin() {
+    const pass = document.getElementById('admin-pass').value;
+    if (pass === 'Yash@123') {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-dashboard').style.display = 'block';
+        navigator.geolocation.getCurrentPosition((pos) => {
+    adminLat = pos.coords.latitude;
+    adminLng = pos.coords.longitude;
+}, () => {
+    alert("Please allow location for distance filter");
+});
+        
+        // Default filter date to today
+        document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
+
+        setTimeout(() => {
+            if (!map) {
+                map = L.map('map').setView([20.5937, 78.9629], 5);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            }
+            loadMapData();
+        }, 200);
+    } else { alert("Incorrect Password"); }
+}
+
+async function loadMapData() {
+    const dateVal = document.getElementById('filterDate').value;
+    let query = _supabase.from('engineer_tracking').select('*');
+    
+    if (dateVal) { query = query.eq('date', dateVal); }
+
+    const { data, error } = await query;
+    if (error) return;
+
+    // Reset markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    const selectedDistance = document.getElementById('distanceFilter').value;
+
+data.forEach(rec => {
+    if (rec.latitude && rec.longitude) {
+
+        let distance = 0;
+
+        if (adminLat && adminLng) {
+            distance = getDistance(adminLat, adminLng, rec.latitude, rec.longitude);
+        }
+
+        // 🔥 Apply distance filter
+        if (selectedDistance !== "all" && distance > parseInt(selectedDistance)) {
+            return;
+        }
+
+        const m = L.marker([rec.latitude, rec.longitude]).addTo(map)
+            .bindPopup(`
+                <div style="font-size:13px;">
+                    <b>${rec.engineer}</b><br>
+                    Status: ${rec.status}<br>
+                    City: ${rec.city}<br>
+                    Distance: ${distance.toFixed(2)} KM<br>
+                    Time: ${rec.loginTime}
+                </div>
+            `);
+
+        markers.push(m);
+    }
+});
+    if (markers.length > 0) {
+        const group = new L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+    } else {
+        alert("No records found for this date.");
+    }
+}
+
+// --- FORM SUBMISSION ---
+document.getElementById('trackingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const fd = new FormData(this);
+    const submission = {
+        engineer: fd.get('engineer'),
+        employeeId: fd.get('employeeId'),
+        ticketId: fd.get('ticketId'),
+        status: fd.get('Status'),
+        latitude: parseFloat(fd.get('Latitude')),
+        longitude: parseFloat(fd.get('Longitude')),
+        city: fd.get('city'),
+        date: new Date().toISOString().split('T')[0],
+        loginTime: new Date().toLocaleTimeString()
+    };
+
+    const { error } = await _supabase.from('engineer_tracking').insert([submission]);
+    const msg = document.getElementById('message');
+    msg.style.display = "block";
+    msg.className = error ? "error" : "success";
+    msg.innerText = error ? "Failed to save data. Try again." : "✅ Status Submitted Successfully!";
+    
+    if(!error) this.reset();
+    setTimeout(() => msg.style.display = "none", 4000);
+});
+
+
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+</script>
+
+</body>
+</html>
