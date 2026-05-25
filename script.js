@@ -1,6 +1,6 @@
 const CONFIG = {
   // Paste your deployed Google Apps Script Web App URL here.
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxtC662dXjvbDLRXU5iKl0ZqsckvmabWawRxT7GHwOCih1pYTYBXmRzT7JdLZBTFPxM/exec"
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzLZ498AV9N5oiRtGdk1ZYBVK0qWZExCMV_Kj81NLHcefBmVElu03Od3gS-w4N0wvT8/exec"
 };
 
 const NODE_FIELDS = [
