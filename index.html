@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PMT Observation Report Q4 AMJ'26</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="observation">
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="Home">
+      <span class="brand-mark">A</span>
+      <span>
+        <strong>PMT Observation</strong>
+        <small>Q4 AMJ'26</small>
+      </span>
+    </a>
+    <nav class="nav-actions" aria-label="Primary navigation">
+      <a class="nav-button" href="attempted.html">Attempted PMT</a>
+      <a class="nav-button" href="conveyance.html">Conveyance</a>
+    </nav>
+  </header>
+
+  <main class="app-shell">
+    <section class="hero-panel">
+      <p class="eyebrow">Airtel Bharti PMT Reporting</p>
+      <h1>PMT Observation Report Q4 AMJ'26</h1>
+      <p>Fetch Google Sheet node details, verify observation checkpoints, upload reports, and submit a clean site record.</p>
+    </section>
+
+    <form id="observationForm" class="form-stack" novalidate>
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Step 1</p>
+            <h2>PMT Details</h2>
+          </div>
+          <span class="pill">Required</span>
+        </div>
+        <div class="status-bar" data-status>Connect Apps Script URL in script.js, then load sheet data.</div>
+
+        <div class="grid two">
+          <label class="field">
+            <span>Enter Email</span>
+            <input type="email" name="email" placeholder="name@company.com" required>
+            <small class="field-error"></small>
+          </label>
+          <label class="field">
+            <span>PMT Complete Time</span>
+            <input type="time" name="pmtCompleteTime" required>
+            <small class="field-error"></small>
+          </label>
+          <label class="field">
+            <span>PMT Complete Date</span>
+            <input id="completeDate" type="date" name="pmtCompleteDate" required>
+            <small class="field-error"></small>
+          </label>
+          <label class="field">
+            <span>Engineer Name</span>
+            <select id="engineerSelect" name="engineerName" required>
+              <option value="">Select date first</option>
+            </select>
+            <small class="field-error"></small>
+          </label>
+          <label class="field">
+            <span>Host Name</span>
+            <select id="hostSelect" name="hostName" required>
+              <option value="">Select engineer first</option>
+            </select>
+            <small class="field-error"></small>
+          </label>
+          <div class="button-row bottom-align">
+            <button class="btn secondary" type="button" id="refetchBtn">ReFetch Data</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Auto-filled</p>
+            <h2>Node Information</h2>
+          </div>
+          <span class="mini-loader" data-loader hidden></span>
+        </div>
+        <div class="node-grid" id="nodeInfo"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Attachment</p>
+            <h2>PDF / Report Upload</h2>
+          </div>
+          <a class="text-link" href="https://www.ilovepdf.com/compress_pdf" target="_blank" rel="noopener">PDF Compressor</a>
+        </div>
+        <label class="upload-box">
+          <input type="file" name="reportUpload" accept=".pdf,.jpg,.jpeg,.png" multiple>
+          <span>Upload PDF, report, or photos</span>
+          <small>Use the compressor link before upload when the PDF is large.</small>
+        </label>
+      </section>
+
+      <section class="card hidden" id="checklistCard">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h2>Detailed PMT Observation Checklist</h2>
+          </div>
+          <span class="pill">Shown after host selection</span>
+        </div>
+
+        <div class="grid two">
+          <label class="field"><span>Installed at Shelter/ODC/MSC/BSC/REG</span><select name="installedLocation" required data-checklist><option value="">Select</option><option>SHELTER</option><option>REG</option><option>MSC</option><option>BSC</option><option>ODC</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Rack mounted firmly</span><select name="rackMountedFirmly" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Dust on device</span><select name="dustOnDevice" required data-checklist><option value="">Select</option><option>Low</option><option>Medium</option><option>High</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Dust on site</span><select name="dustOnSite" required data-checklist><option value="">Select</option><option>Low</option><option>Medium</option><option>High</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Rust Status</span><select name="rustStatus" required data-checklist><option value="">Select</option><option>Rusty</option><option>Not-Rusty</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Back Space Available</span><select name="backSpaceAvailable" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Rail-Kit Available</span><select name="railKitAvailable" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Device Cleaning Done</span><select name="deviceCleaningDone" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Fan Cleaning Done</span><select name="fanCleaningDone" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Air Filter Cleaning</span><select name="airFilterCleaning" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option><option>NA</option><option>Torned</option><option>Missing</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Site Temperature</span><select id="temperatureSelect" name="siteTemperature" required data-checklist></select><small class="field-error"></small></label>
+          <label class="field"><span>AC Count</span><select id="acCountSelect" name="acCount" required data-checklist></select><small class="field-error"></small></label>
+          <label class="field"><span>AC Not Working Count</span><select id="acFaultSelect" name="acNotWorkingCount" required data-checklist></select><small class="field-error"></small></label>
+          <label class="field"><span>Main Door Proper Closable</span><select name="mainDoorClosable" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Deep Cleaning Required</span><select name="deepCleaningRequired" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Cable Dressing Status</span><select name="cableDressingStatus" required data-checklist><option value="">Select</option><option>Dressed</option><option>Undressed</option><option>Extremely Poor</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Alarm on Module</span><select name="alarmOnModule" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Filler Tray Missing</span><select name="fillerTrayMissing" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Filler Tray Missing Count</span><input type="number" name="fillerTrayMissingCount" min="0" value="0" required data-checklist><small class="field-error"></small></label>
+          <label class="field"><span>SFP Cap Missing</span><select name="sfpCapMissing" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>SFP Cap Count</span><input type="number" name="sfpCapCount" min="0" value="0" required data-checklist><small class="field-error"></small></label>
+          <label class="field"><span>Device Serial Number Photos Captured</span><select name="serialPhotoCaptured" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Power Status</span><select name="powerStatus" required data-checklist><option value="">Select</option><option>ON</option><option>OFF</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Photos Not Allowed</span><select name="photosNotAllowed" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Proper Gap Available</span><select name="properGapAvailable" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Earthing Connected with BUSBAR</span><select name="earthingBusbar" required data-checklist><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Priority Status</span><select name="priorityStatus" required data-checklist><option>None</option><option>Active State</option></select><small class="field-error"></small></label>
+        </div>
+
+        <div class="subsection">
+          <h3>Final Observation Remarks</h3>
+          <div class="check-grid" id="remarksList"></div>
+        </div>
+
+        <label class="field">
+          <span>Other Issues</span>
+          <textarea name="otherIssues" rows="4" placeholder="Describe any additional issue found on site"></textarea>
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h2>Site Person Details</h2>
+          </div>
+        </div>
+        <div class="grid two">
+          <label class="field"><span>Site Person Type</span><select name="sitePersonType" required><option value="">Select</option><option>ISP</option><option>NMT</option><option>Local Person</option><option>Technician</option><option>Security Guard</option><option>NA</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Name</span><input type="text" name="sitePersonName" placeholder="Person name"></label>
+          <label class="field"><span>Number</span><input type="tel" name="sitePersonNumber" placeholder="10 digit mobile number"></label>
+          <label class="field"><span>Person Available for Signature</span><select name="personAvailableForSignature" required><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+        </div>
+      </section>
+
+      <section class="action-card">
+        <button class="btn primary" type="submit">Submit Form</button>
+        <button class="btn ghost" type="reset">Clear Form</button>
+      </section>
+    </form>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>

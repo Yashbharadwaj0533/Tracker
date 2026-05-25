@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attempted PMT Report Q4 AMJ'26</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="attempted">
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="Home">
+      <span class="brand-mark">A</span>
+      <span>
+        <strong>Attempted PMT</strong>
+        <small>Q4 AMJ'26</small>
+      </span>
+    </a>
+    <nav class="nav-actions" aria-label="Primary navigation">
+      <a class="nav-button" href="index.html">Back/Home</a>
+      <a class="nav-button" href="conveyance.html">Conveyance</a>
+    </nav>
+  </header>
+
+  <main class="app-shell">
+    <section class="hero-panel compact">
+      <p class="eyebrow">Airtel Bharti PMT Reporting</p>
+      <h1>Attempted PMT Report</h1>
+      <p>Record attempted visits, cancellation reasons, node details, and site person verification.</p>
+    </section>
+
+    <form id="attemptedForm" class="form-stack" novalidate>
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Step 1</p>
+            <h2>Attempted PMT Details</h2>
+          </div>
+        </div>
+        <div class="status-bar" data-status>Connect Apps Script URL in script.js, then load sheet data.</div>
+
+        <div class="grid two">
+          <label class="field"><span>Email</span><input type="email" name="email" placeholder="name@company.com" required><small class="field-error"></small></label>
+          <label class="field"><span>PMT Complete Time</span><input type="time" name="pmtCompleteTime" required><small class="field-error"></small></label>
+          <label class="field"><span>PMT Complete Date</span><input id="completeDate" type="date" name="pmtCompleteDate" required><small class="field-error"></small></label>
+          <label class="field"><span>Engineer Name</span><select id="engineerSelect" name="engineerName" required><option value="">Select date first</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Host Name</span><select id="hostSelect" name="hostName" required><option value="">Select engineer first</option></select><small class="field-error"></small></label>
+          <div class="button-row bottom-align"><button class="btn secondary" type="button" id="refetchBtn">ReFetch Data</button></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Auto-filled</p>
+            <h2>Node Information</h2>
+          </div>
+          <span class="mini-loader" data-loader hidden></span>
+        </div>
+        <div class="node-grid" id="nodeInfo"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h2>Attempt Details</h2>
+          </div>
+        </div>
+        <div class="grid two">
+          <label class="field"><span>Installed Location</span><select name="installedLocation" required><option value="">Select</option><option>SHELTER</option><option>REG</option><option>MSC</option><option>BSC</option><option>ODC</option></select><small class="field-error"></small></label>
+          <label class="field wide"><span>Reason for Cancellation</span><textarea name="reasonForCancellation" rows="4" placeholder="Enter cancellation reason" required></textarea><small class="field-error"></small></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Attachment</p>
+            <h2>Upload Photos & Reports</h2>
+          </div>
+          <a class="text-link" href="https://www.ilovepdf.com/compress_pdf" target="_blank" rel="noopener">PDF Compressor</a>
+        </div>
+        <label class="upload-box">
+          <input type="file" name="attemptedUploads" accept=".pdf,.jpg,.jpeg,.png" multiple>
+          <span>Upload attempted PMT photos and reports</span>
+          <small>Multiple files are allowed.</small>
+        </label>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h2>Site Person Details</h2>
+          </div>
+        </div>
+        <div class="grid two">
+          <label class="field"><span>Site Person Type</span><select name="sitePersonType" required><option value="">Select</option><option>ISP</option><option>NMT</option><option>Local Person</option><option>Technician</option><option>Security Guard</option><option>NA</option></select><small class="field-error"></small></label>
+          <label class="field"><span>Name</span><input type="text" name="sitePersonName" placeholder="Person name"></label>
+          <label class="field"><span>Number</span><input type="tel" name="sitePersonNumber" placeholder="10 digit mobile number"></label>
+          <label class="field"><span>Person Available for Signature</span><select name="personAvailableForSignature" required><option value="">Select</option><option>Yes</option><option>No</option></select><small class="field-error"></small></label>
+        </div>
+      </section>
+
+      <section class="action-card">
+        <button class="btn primary" type="submit">Submit Form</button>
+        <button class="btn ghost" type="reset">Clear Form</button>
+      </section>
+    </form>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>
