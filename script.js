@@ -1,6 +1,6 @@
 const CONFIG = {
   // Paste your deployed Google Apps Script Web App URL here.
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwOlWEYfY79EXJvIc6QJKQP9TkLizrVVVkuY1FTm7wPzx7IqLISU8LpBvn1NaT2YqCR/exec"
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxtC662dXjvbDLRXU5iKl0ZqsckvmabWawRxT7GHwOCih1pYTYBXmRzT7JdLZBTFPxM/exec"
 };
 
 const NODE_FIELDS = [
@@ -56,15 +56,8 @@ async function apiGet(action, params = {}) {
     throw new Error("Paste your Apps Script /exec URL in script.js first.");
   }
 
-  const url = new URL(CONFIG.APPS_SCRIPT_URL);
-  url.searchParams.set("action", action);
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) url.searchParams.set(key, value);
-  });
-
-  const response = await fetch(url.toString());
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data.error) throw new Error(data.error || "Google Sheet request failed.");
+  const data = await jsonpRequest(action, params);
+  if (data.error) throw new Error(data.error || "Google Sheet request failed.");
   return data;
 }
 
@@ -73,14 +66,53 @@ async function apiPost(payload) {
     throw new Error("Paste your Apps Script /exec URL in script.js first.");
   }
 
-  const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+  await fetch(CONFIG.APPS_SCRIPT_URL, {
     method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ action: "submitData", ...payload })
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data.error) throw new Error(data.error || "Form submit failed.");
-  return data;
+
+  // Apps Script does not expose CORS headers, so no-cors responses are opaque.
+  // The request is still sent; keep a local copy as a backup.
+  return { success: true };
+}
+
+function jsonpRequest(action, params = {}) {
+  return new Promise((resolve, reject) => {
+    const callbackName = "pmtJsonp_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+    const url = new URL(CONFIG.APPS_SCRIPT_URL);
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Google Sheet request timed out."));
+    }, 20000);
+
+    url.searchParams.set("action", action);
+    url.searchParams.set("callback", callbackName);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) url.searchParams.set(key, value);
+    });
+
+    window[callbackName] = data => {
+      cleanup();
+      resolve(data || {});
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Unable to load Apps Script API. Check deployment access and URL."));
+    };
+
+    script.src = url.toString();
+    document.body.appendChild(script);
+
+    function cleanup() {
+      window.clearTimeout(timer);
+      delete window[callbackName];
+      script.remove();
+    }
+  });
 }
 
 function setupDropdownFlow() {
